@@ -60,8 +60,8 @@ def get_particle_params_at_time(base_path, runs, simarchive_name, time):
         sa = rebound.Simulationarchive(simarchive_dir)
         snapshot = int(time/1e5) + 1
         sim_f = sa[snapshot] # Final snapshot
-        tp = sa[-1].t   # Time point of last snapshot
         n_bodies = sim_f.N - 3  # Exclude Sun, Jupiter, Saturn
+        sim_id = i
 
     
         # Collect data for this run
@@ -73,7 +73,7 @@ def get_particle_params_at_time(base_path, runs, simarchive_name, time):
             r = sim_f.particles[j+1].r
             e = sim_f.particles[j+1].e
             h = sim_f.particles[j+1].hash.value  
-            i = sim_f.particles[j+1].inc
+            inc = sim_f.particles[j+1].inc
 
             if 0 <= a < 100:  # Filter valid semi-major axes
                 planet_data["semi"].append(a)
@@ -81,10 +81,11 @@ def get_particle_params_at_time(base_path, runs, simarchive_name, time):
                 planet_data["radius"].append(r)
                 planet_data["ecc"].append(e)
                 planet_data["hash"].append(h)
-                planet_data["inc"].append(i)
+                planet_data["inc"].append(inc)
 
         # Convert to DataFrame and store
         df = pd.DataFrame(planet_data)
+        df['sim_id'] = i
         dataframes.append(df)
 
     return dataframes  # List of DataFrames
