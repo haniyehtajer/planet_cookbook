@@ -6,6 +6,7 @@ from scipy.stats import ks_2samp
 import os
 import rebound
 
+
 def get_runtime_data(base_path, n_runs, simarchive_name):
     data = []
 
@@ -288,3 +289,47 @@ def perform_ks_test(data1, data2, alpha=0.05):
                      "Fail to reject H0: No significant difference in the datasets."
     }
     return result
+
+
+def get_pldfs_uniform(base_path, sim_set, simarchive_name, n_runs, cut_time, cmf):
+    """
+    args:
+    base_path: folder with all the subfolders of different simualtion sets
+    sim_set: name of simulation set
+    n_runs: number of runs
+    cut_time: time at which we are analyzing
+
+    output:
+    list of planet dataframes, with CMF, mass, hash, semi major axis and other particle parameters
+    """
+    sim_archive_path = base_path + sim_set + "/" + sim_set + "_" #path given to get_runtime_data function
+    rdf = get_runtime_data(sim_archive_path, 10, simarchive_name) #rdf is runtime data frame
+
+    maxtimes = np.array([rdf[rdf['simulation_id'] == i + 1]['time'].max()
+    for i in range(n_runs)])
+
+    keep_runs = np.where(maxtimes > cut_time)[0]
+
+    ppdf_list = get_particle_params_at_time(sim_archive_path, keep_runs, simarchive_name, cut_time)
+
+    pldf_list = []
+
+    for j, i in enumerate(keep_runs):
+        df = read_dbct_output(sim_archive_path + f"{i+1}/uniform_{int(cmf*100)}.txt", cmf, "none", "none")
+        df_len = len(df)
+        param_len = len(ppdf_list[j])
+        min_len = min(df_len, param_len)
+
+        if min_len == 0:
+            print(f"Skipping index {i}: empty df or param list.")
+            continue
+
+        # Trim both to same length
+        df = df.iloc[:min_len].copy()
+        semi_values = ppdf_list[j]['semi'][:min_len]
+        df['semi'] = semi_values.values  # if semi_values is a Series
+        df['sim_id'] = i + 1
+
+        pldf_list.append(df)
+
+    return pldf_list
