@@ -303,7 +303,7 @@ def get_pldfs_uniform(base_path, sim_set, simarchive_name, n_runs, cut_time, cmf
     list of planet dataframes, with CMF, mass, hash, semi major axis and other particle parameters
     """
     sim_archive_path = base_path + sim_set + "/" + sim_set + "_" #path given to get_runtime_data function
-    rdf = get_runtime_data(sim_archive_path, 10, simarchive_name) #rdf is runtime data frame
+    rdf = get_runtime_data(sim_archive_path, n_runs, simarchive_name) #rdf is runtime data frame
 
     maxtimes = np.array([rdf[rdf['simulation_id'] == i + 1]['time'].max()
     for i in range(n_runs)])
